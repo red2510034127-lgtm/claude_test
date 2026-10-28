@@ -92,7 +92,7 @@ python -m film.render --preview             # 960×540 の確認用
 python -m film.render --stills 5,16,28.6,45  # 指定秒のフレームを PNG で
 ```
 
-4 コアなら本番は 20〜30 分ほどかかる。
+4 コアの環境で本番のレンダリングは約 14 分（実測 13.5 分）。出力は約 70 MB（H.264 CRF 19、AAC 320 kbps）。音声は統合ラウドネス -19 LUFS、トゥルーピーク -0.5 dBFS。
 
 ---
 
