@@ -1,0 +1,68 @@
+name: Render AFTERIMAGE
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview:
+        description: "Half-resolution preview (faster)"
+        type: boolean
+        default: false
+  push:
+    paths:
+      - "film/**"
+      - "scripts/**"
+      - "requirements.txt"
+      - ".github/workflows/render.yml"
+
+concurrency:
+  group: render-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffmpeg -version | head -1
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch fonts (SIL OFL, from Google Fonts)
+        run: python scripts/fetch_fonts.py
+
+      - name: Render film
+        run: |
+          FLAGS=""
+          if [ "${{ inputs.preview }}" = "true" ]; then FLAGS="--preview"; fi
+          echo "cores: $(nproc)"
+          python -m film.render $FLAGS --workers "$(nproc)" --out out/afterimage.mp4
+
+      - name: Verify output
+        run: python scripts/verify.py out/afterimage.mp4 --sheet out/contact_sheet.jpg
+
+      - name: Upload film
+        uses: actions/upload-artifact@v4
+        with:
+          name: afterimage-mp4
+          path: out/afterimage.mp4
+          compression-level: 0
+          retention-days: 90
+
+      - name: Upload contact sheet
+        uses: actions/upload-artifact@v4
+        with:
+          name: contact-sheet
+          path: out/contact_sheet.jpg
+          retention-days: 90

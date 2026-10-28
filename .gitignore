@@ -1,0 +1,4 @@
+out/
+assets/fonts/*.ttf
+__pycache__/
+*.pyc
